@@ -1,0 +1,64 @@
+name: Sync X articles and publish website
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 */2 * * *' # Every two hours UTC; GitHub may delay scheduled jobs.
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: nuradu-publish
+  cancel-in-progress: false
+jobs:
+  sync-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Get repository
+        uses: actions/checkout@v4
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate local code
+        run: node --test tests/*.test.mjs
+      - name: Fetch new native X Articles (schedule/manual only)
+        if: github.event_name != 'push'
+        env:
+          X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_USER_ID: ${{ vars.X_USER_ID }}
+          X_INITIAL_PAGES: ${{ vars.X_INITIAL_PAGES }}
+          X_INCREMENTAL_PAGES: '32'
+        run: node scripts/sync-x.mjs
+      - name: Save updated article archive
+        id: changes
+        if: github.event_name != 'push'
+        run: |
+          if ! git diff --quiet -- website/articles-auto.js sync/articles-auto.json sync/x-sync-state.json; then
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add website/articles-auto.js sync/articles-auto.json sync/x-sync-state.json
+            git commit -m 'chore: sync X articles'
+            git push
+          else
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Configure GitHub Pages
+        if: github.event_name == 'push' || steps.changes.outputs.changed == 'true'
+        uses: actions/configure-pages@v5
+      - name: Package public website only (no tokens / admin files)
+        if: github.event_name == 'push' || steps.changes.outputs.changed == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: website
+      - name: Deploy site
+        if: github.event_name == 'push' || steps.changes.outputs.changed == 'true'
+        id: deployment
+        uses: actions/deploy-pages@v4
