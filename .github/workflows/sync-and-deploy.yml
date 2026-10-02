@@ -1,64 +1,111 @@
-name: Sync X articles and publish website
+name: Publish X article links and website
 on:
   push:
     branches: [main]
-  schedule:
-    - cron: '17 */2 * * *' # Every two hours UTC; GitHub may delay scheduled jobs.
+  issues:
+    types: [opened, edited]
   workflow_dispatch:
+
 permissions:
   contents: write
+  issues: read
   pages: write
   id-token: write
+
 concurrency:
   group: nuradu-publish
   cancel-in-progress: false
+
 jobs:
-  sync-and-deploy:
+  publish:
+    # Only the repository owner may submit public article metadata.
+    if: github.event_name != 'issues' || (github.event.issue.user.login == github.repository_owner && startsWith(github.event.issue.title, '[아티클]'))
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Get repository
+      - name: Check out site
         uses: actions/checkout@v4
-      - name: Node.js
+        with:
+          ref: main
+          persist-credentials: true
+      - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Validate local code
+      - name: Validate project
         run: node --test tests/*.test.mjs
-      - name: Fetch new native X Articles (schedule/manual only)
-        if: github.event_name != 'push'
-        env:
-          X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
-          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
-          X_USER_ID: ${{ vars.X_USER_ID }}
-          X_INITIAL_PAGES: ${{ vars.X_INITIAL_PAGES }}
-          X_INCREMENTAL_PAGES: '32'
-        run: node scripts/sync-x.mjs
-      - name: Save updated article archive
-        id: changes
-        if: github.event_name != 'push'
+      - name: Add or update article from my GitHub issue (NO X API)
+        if: github.event_name == 'issues'
+        shell: bash
         run: |
-          if ! git diff --quiet -- website/articles-auto.js sync/articles-auto.json sync/x-sync-state.json; then
-            echo 'changed=true' >> "$GITHUB_OUTPUT"
+          node --input-type=module <<'NODE'
+          import {readFile,writeFile} from 'node:fs/promises';
+          import {classify,postIdFromUrl,renderJs,USERNAME} from './scripts/sync-core.mjs';
+          const event=JSON.parse(await readFile(process.env.GITHUB_EVENT_PATH,'utf8'));
+          const issue=event.issue;
+          if(issue.user?.login?.toLowerCase() !== process.env.GITHUB_REPOSITORY_OWNER.toLowerCase()) throw new Error('Only the owner may publish articles.');
+          const title=(issue.title||'').replace(/^\[아티클\]\s*/,'').trim();
+          if(!title || title.length>140) throw new Error('Issue title should be [아티클] followed by the real article title (max 140 characters).');
+          const body=issue.body||'';
+          const possibleLinks=body.match(/https?:\/\/[^\s<>\u0022']+/gi)||[];
+          let url='', postId='';
+          for(const candidate of possibleLinks){
+            try {
+              const u=new URL(candidate.replace(/[),.;]+$/g,''));
+              const p=u.pathname.split('/').filter(Boolean);
+              if(u.protocol!=='https:' || !['x.com','www.x.com','twitter.com','www.twitter.com','mobile.x.com'].includes(u.hostname)) continue;
+              if(p.length!==3 || p[0].toLowerCase()!==USERNAME.toLowerCase() || !['status','article'].includes(p[1]) || !/^\d{5,20}$/.test(p[2])) continue;
+              postId=postIdFromUrl(u.href);
+              if(!postId) continue;
+              url=`https://x.com/${USERNAME}/${p[1]}/${postId}`;
+              break;
+            } catch {} // Ignore irrelevant links in the issue body.
+          }
+          if(!url || !postId) throw new Error(`Paste a valid https://x.com/${USERNAME}/status/NUMBER or /article/NUMBER URL into the issue body.`);
+          const optional=(name,max=350)=>{
+            const match=body.match(new RegExp('(?:^|\\n)\\s*'+name+'\\s*:\\s*([^\\n]+)','im'));
+            return (match?.[1]||'').trim().slice(0,max);
+          };
+          const meta=classify(title, optional('소개'));
+          const summary=optional('소개')||`${meta.category} 관련 리서치입니다. 자세한 내용은 X 원문에서 확인해 주세요.`;
+          const rawTags=optional('태그',150);
+          const tags=[...new Set(rawTags.split(/[,，#]/).map(t=>t.trim().replace(/^[$#]/,'')).filter(t=>t && t.length<=25))].slice(0,5);
+          const day=optional('게시일',10);
+          const dayValid=/^\d{4}-\d{2}-\d{2}$/.test(day) && Number.isFinite(Date.parse(day+'T00:00:00Z')) && new Date(day+'T00:00:00Z').toISOString().slice(0,10)===day;
+          const date=dayValid ? day : new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(issue.created_at));
+          const info=optional('공개');
+          const access=/^무료/.test(info)?'free':/^구독자/.test(info)?'subscriber':'unknown';
+          const archiveFile='sync/articles-auto.json';
+          let data=JSON.parse(await readFile(archiveFile,'utf8'));
+          if(!Array.isArray(data))throw new Error('Invalid article data JSON.');
+          const entry={id:`x-${postId}`,xPostId:String(postId),source:'link-form',githubIssueNumber:issue.number,title,summary,date,category:meta.category,cover:meta.cover,tags,access,url,featured:false,readMinutes:null,demo:false};
+          data=data.filter(a=>a?.githubIssueNumber!==issue.number && String(a?.xPostId)!==String(postId));
+          data.unshift(entry);
+          data.sort((a,b)=>(b.date||'').localeCompare(a.date||'')||Number(b.githubIssueNumber||0)-Number(a.githubIssueNumber||0));
+          await writeFile(archiveFile,JSON.stringify(data,null,2)+'\n');
+          await writeFile('website/articles-auto.js',renderJs(data));
+          console.log(`Added/updated #${issue.number} (${url}), total ${data.length}. No X API access was used.`);
+          NODE
+      - name: Save new article data
+        if: github.event_name == 'issues'
+        run: |
+          if ! git diff --quiet -- sync/articles-auto.json website/articles-auto.js; then
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add website/articles-auto.js sync/articles-auto.json sync/x-sync-state.json
-            git commit -m 'chore: sync X articles'
-            git push
+            git add sync/articles-auto.json website/articles-auto.js
+            git commit -m 'content: add X article via GitHub issue #${{ github.event.issue.number }}'
+            git push origin HEAD:main
           else
-            echo 'changed=false' >> "$GITHUB_OUTPUT"
+            echo 'Article metadata already up to date.'
           fi
-      - name: Configure GitHub Pages
-        if: github.event_name == 'push' || steps.changes.outputs.changed == 'true'
+      - name: Configure Pages
         uses: actions/configure-pages@v5
-      - name: Package public website only (no tokens / admin files)
-        if: github.event_name == 'push' || steps.changes.outputs.changed == 'true'
+      - name: Upload public site only
         uses: actions/upload-pages-artifact@v3
         with:
           path: website
       - name: Deploy site
-        if: github.event_name == 'push' || steps.changes.outputs.changed == 'true'
         id: deployment
         uses: actions/deploy-pages@v4
