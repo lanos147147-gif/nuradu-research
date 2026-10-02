@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f7f6f1">
+  <meta name="description" content="NURadu Research · X에 흩어진 전력, 반도체, 방산, 기업 및 투자 분석을 한곳에서 찾아보는 아티클 라이브러리.">
+  <meta property="og:title" content="NURadu Research · 아티클 라이브러리">
+  <meta property="og:description" content="흩어진 분석을, 하나의 지도처럼. 산업과 기업을 연결하는 리서치 아카이브.">
+  <title>NURadu Research — 아티클 라이브러리</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script src="articles.js" defer></script>
+  <script src="articles-auto.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="announcement">NURADU FIELD NOTES <span class="announcement-line"></span> INDUSTRY · EQUITY · TECHNOLOGY</div>
+  <header class="site-header" id="top">
+    <div class="shell nav-inner">
+      <a class="brand" href="index.html" aria-label="NURadu Research 홈"><span class="brand-symbol">N<span class="brand-dot">.</span></span><span class="brand-text">NURADU <small>RESEARCH LIBRARY</small></span></a>
+      <nav class="main-nav" aria-label="주 메뉴">
+        <a class="nav-link selected" href="index.html">라이브러리</a>
+        <a class="nav-link" href="about.html">사이트 소개</a><a class="nav-link" href="live.html">X 최신글</a>
+        <a class="nav-link nav-external" href="https://x.com/NURadu_" target="_blank" rel="noopener noreferrer">X 계정 <span aria-hidden="true">↗</span></a>
+      </nav>
+      <a class="nav-subscribe" href="https://x.com/NURadu_/creator-subscriptions/subscribe" target="_blank" rel="noopener noreferrer">X 구독하기 <span aria-hidden="true">↗</span></a>
+    </div>
+  </header>
+  <main>
+    <section class="hero shell" aria-labelledby="hero-title">
+      <div class="hero-left">
+        <div class="eyebrow"><span class="tiny-square"></span> AN OPEN INDEX OF IDEAS <span class="eyebrow-number">01 / ARCHIVE</span></div>
+        <h1 id="hero-title">흩어진 분석을,<br><em>하나의 지도처럼.</em></h1>
+        <p class="hero-desc">전력, 반도체, 희토류부터 기업 분석과 투자 프레임워크까지.<br class="desktop-break"> X 타임라인에 쌓인 생각을 주제별로 다시 찾는 공간입니다.</p>
+        <div class="hero-actions"><a class="btn btn-dark" href="#library">아티클 찾아보기 <span aria-hidden="true">↘</span></a><a class="btn btn-text" href="about.html">이용 방법 <span aria-hidden="true">↗</span></a></div>
+        <div class="hero-stats" aria-label="라이브러리 현황"><div><strong id="stat-total">—</strong><span>등록된 아티클</span></div><div><strong id="stat-topic">—</strong><span>리서치 주제</span></div><div><strong id="stat-free">—</strong><span>무료 공개 글</span></div></div>
+      </div>
+      <aside class="hero-right" aria-label="주요 리서치">
+        <div class="hero-right-top"><span>EDITOR'S PICK / 001</span><span class="small-star">✳</span></div>
+        <div class="artwork artwork-hero" aria-hidden="true"><div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="orbit orbit-c"></div><div class="art-center">N<span>.</span></div><div class="art-label art-label-1">SIGNAL</div><div class="art-label art-label-2">NOISE</div></div>
+        <div class="hero-right-bottom"><span class="featured-kicker">FEATURED RESEARCH</span><h2 id="featured-title">새로운 시선을 모으는 곳</h2><p id="featured-summary">지금 주목할 분석을 소개합니다.</p><a id="featured-link" class="featured-link" href="#library">라이브러리 탐색하기 <span aria-hidden="true">↗</span></a></div>
+      </aside>
+    </section>
+    <section class="library-section" id="library" aria-labelledby="library-title">
+      <div class="shell">
+        <div class="section-heading"><div><div class="eyebrow"><span class="tiny-square"></span> RESEARCH COLLECTION / 002</div><h2 id="library-title">아티클 라이브러리<span class="heading-period">.</span></h2><p>키워드로 찾거나, 관심 있는 산업별로 골라 읽어보세요.</p></div><div class="heading-aside">RESEARCH IS AN ONGOING PROCESS.<br>STAY CURIOUS. STAY CRITICAL.</div></div>
+        <div id="demoNotice" class="demo-notice" hidden><strong>시안 미리보기</strong> 현재 등록된 글은 레이아웃 확인을 위한 제목·요약 샘플입니다. 실제 X 원문 링크를 넣으면 해당 글로 이동합니다.</div>
+        <div class="search-panel"><label class="search-label" for="searchInput">무엇을 찾고 계신가요?</label><div class="search-field"><svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10.5" cy="10.5" r="6.4"/><path d="m15.4 15.4 5 5"/></svg><input id="searchInput" type="search" placeholder="기업명, 티커, 산업, 키워드 검색 (예: EROC, MRAM, 전력)" autocomplete="off"><kbd>/</kbd></div><div class="filter-heading"><span>TOPICS</span><button id="resetBtn" type="button" class="reset-btn">필터 초기화 ↺</button></div><div class="category-chips" id="categoryChips" role="group" aria-label="주제 선택"></div></div>
+        <div class="toolbar"><div class="access-tabs" role="group" aria-label="공개 범위"><button type="button" class="access-tab is-active" data-access="all">전체</button><button type="button" class="access-tab" data-access="free">무료 공개</button><button type="button" class="access-tab" data-access="subscriber">구독자 전용</button></div><div class="tool-right"><label class="new-only"><input type="checkbox" id="newOnly"><span>최근 30일</span></label><label class="sort-label" for="sortSelect">정렬 <select id="sortSelect"><option value="newest">최신순</option><option value="oldest">오래된순</option><option value="title">제목순</option></select></label><div class="view-switch" role="group" aria-label="보기 방식"><button type="button" id="gridBtn" class="view-btn is-active" aria-label="카드형 보기" title="카드형 보기" aria-pressed="true">▦</button><button type="button" id="listBtn" class="view-btn" aria-label="목록형 보기" title="목록형 보기" aria-pressed="false">☷</button></div></div></div>
+        <div class="results-head"><div><span class="result-mark"></span><strong id="resultCount">0</strong>개의 리서치</div><button class="share-btn" type="button" id="shareBtn">현재 검색 조건 공유 ↗</button></div>
+        <div id="articleGrid" class="article-grid" aria-live="polite"></div>
+        <div class="empty-state" id="emptyState" hidden><span>NO RESULTS FOUND / 404</span><h3>이 조건에 맞는 글이 없습니두.</h3><p>키워드나 필터를 조금 바꿔보세요.</p><button id="emptyReset" class="btn btn-dark" type="button">전체 글 보기 ↗</button></div>
+      </div>
+    </section>
+    <section class="x-connect-strip" aria-labelledby="x-connect-heading">
+      <div class="shell x-connect-inner">
+        <div><div class="eyebrow"><span class="tiny-square"></span> OFFICIAL X TIMELINE / 003</div><h2 id="x-connect-heading">@NURadu_ 계정의 최신 공개글</h2><p>아카이브에는 분야별로 정리한 글을, X 피드에는 실제 공개 계정의 최근 게시물을 표시합니다. 유료 아티클 본문은 X에서만 열람할 수 있습니다.</p></div>
+        <a class="btn btn-dark" href="live.html">실시간 X 피드 보기 <span aria-hidden="true">↗</span></a>
+      </div>
+    </section>
+    <section class="cta-section"><div class="shell cta-inner"><div><div class="eyebrow eyebrow-light"><span class="tiny-square"></span> KEEP EXPLORING / 004</div><h2>새로운 리서치는<br>X에서 이어집니다<span class="accent-dot">.</span></h2><p>이 사이트는 아티클을 찾아보는 자료실입니다. 글의 원문과 구독은 X에서 제공됩니다.</p></div><a class="btn btn-light" href="https://x.com/NURadu_/creator-subscriptions/subscribe" target="_blank" rel="noopener noreferrer">NURadu X 구독하기 <span aria-hidden="true">↗</span></a></div></section>
+  </main>
+  <footer class="site-footer"><div class="shell footer-inner"><div><div class="footer-brand">NURADU<span>.</span></div><span>Independent thoughts on industry & markets.</span></div><div class="footer-links"><a href="about.html">ABOUT</a><a href="live.html">LIVE X FEED</a><a href="https://x.com/NURadu_" target="_blank" rel="noopener noreferrer">X / TWITTER ↗</a><a href="#top">BACK TO TOP ↑</a></div><p>© <span id="currentYear">2026</span> NURadu Research · 투자 권유가 아닌 정보 공유를 위한 아카이브</p></div></footer>
+  <template id="articleTemplate"><article class="article-card"><div class="card-art"><div class="card-topline"><span class="card-index"></span><span class="card-access"></span></div><div class="card-shape"><span class="shape-text"></span></div><div class="card-art-bottom"><span class="card-category"></span><span class="card-date"></span></div></div><div class="card-body"><div class="card-kicker"><span class="card-category-text"></span><span class="card-read"></span></div><h3 class="card-title"></h3><p class="card-summary"></p><div class="card-tags"></div><div class="card-footer"><span class="card-link-state"></span><a class="card-open" href="#" target="_blank" rel="noopener noreferrer">X에서 원문 읽기 <span aria-hidden="true">↗</span></a></div></div></article></template>
+</body>
+</html>
